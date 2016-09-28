@@ -1,36 +1,98 @@
+var LEFT = 0;
+var RIGHT = 1;
 
-var Player = function() {	
-	this.image = document.createElement("img");
+var ANIM_IDLE_LEFT = 0;
+var ANIM_JUMP_LEFT = 1;
+var ANIM_WALK_LEFT = 2;
+var ANIM_IDLE_RIGHT = 3;  
+var ANIM_JUMP_RIGHT = 4;
+var ANIM_WALK_RIGHT = 5;
+var ANIM_MAX = 6;
+
+
+
+/*constructor*/ 
+	var Player = function() {	
+	
+	//sprite sheet source aspects
+		this.sprite = new Sprite("ChuckNorris.png");
+		this.sprite.buildAnimation(12, 8, 165, 126, 0.05,[0, 1, 2, 3, 4, 5, 6, 7]);
+		this.sprite.buildAnimation(12, 8, 165, 126, 0.05,[8, 9, 10, 11, 12]);
+		this.sprite.buildAnimation(12, 8, 165, 126, 0.05,[13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26]);
+		this.sprite.buildAnimation(12, 8, 165, 126, 0.05,[52, 53, 54, 55, 56, 57, 58, 59]);
+		this.sprite.buildAnimation(12, 8, 165, 126, 0.05,[60, 61, 62, 63, 64]);
+		this.sprite.buildAnimation(12, 8, 165, 126, 0.05,[65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78]);
+		
+		for(var i=0; i<ANIM_MAX; i++)
+		{
+			this.sprite.setAnimationOffset(i, -55, -87);
+		}
+	this.startPosition = new Vector2
+	this.startPosition.set(9 * TILE, 0 * TILE)
+	
+	
 	this.position = new Vector2();
-	this.position.set(9*TILE, 0*TILE); //'TILE' is the width of  tile
+	this.position.set(this.startPosition.x, this.startPosition.y); //'TILE' is the width of  tile+
 	
 	this.width = 159;
 	this.height = 163;	
 
-	this.offset = new Vector2();
-	this.offset.set = (-55,-87);
 	
 	this.velocity = new Vector2();
 	
 	this.falling = true;
 	this.jumping = false;
 	
+	this.direction = LEFT;
    
-	this.image.src = "hero.png";   
+	this.lives = 3;
+	this.isAlive = true;
 };
 
 Player.prototype.update = function(deltaTime)
 {	
+	this.sprite.update (deltaTime);
+
 	var left = false;
 	var right = false;
 	var jump = false;
 	
-	// check keypress events
+	// left and right keypress events
 	if(keyboard.isKeyDown(keyboard.KEY_LEFT) == true) {
 		left = true;
+		this.direction = LEFT;
+		if (this.sprite.currentAnimation != ANIM_WALK_LEFT && this.jumping == false)
+		{
+			this.sprite.setAnimation(ANIM_WALK_LEFT);
+		}
 	 }
-	 if(keyboard.isKeyDown(keyboard.KEY_RIGHT) == true) {
+	 else if(keyboard.isKeyDown(keyboard.KEY_RIGHT) == true) {
 	 right = true;
+		this.direction = RIGHT;
+		if (this.sprite.currentAnimation != ANIM_WALK_RIGHT && this.jumping == false)
+		{
+			this.sprite.setAnimation(ANIM_WALK_RIGHT);
+		}
+	 }
+	 else // left and right idle animation
+	 {
+		 if (this.jumping == false && this.falling == false )
+		 {
+			 if (this.direction == LEFT)  
+			 {
+				 if (this.sprite.currentAnimation != ANIM_IDLE_LEFT)
+				 {
+					 this.sprite.setAnimation(ANIM_IDLE_LEFT);
+				 }
+			 }
+			else
+			{
+				if (this.sprite.currentAnimation != ANIM_IDLE_RIGHT)
+				{
+					this.sprite.setAnimation(ANIM_IDLE_RIGHT);
+				}
+			}	 
+		}
 	 }
 	 if(keyboard.isKeyDown(keyboard.KEY_SPACE) == true) {
 	 jump = true;
@@ -48,13 +110,22 @@ Player.prototype.update = function(deltaTime)
 		ddx = ddx + FRICTION; // player was going left, but not any more
 	if (right)
 		ddx = ddx + ACCEL; // player wants to go right
-	else if (wasright)
+	else if (wasright)  
 		ddx = ddx - FRICTION; // player was going right, but not any more
 	if (jump && !this.jumping && !falling)
 	{
 	ddy = ddy - JUMP; // apply an instantaneous (large) vertical impulse
 		this.jumping = true;
+		if (this.direction == LEFT)
+		{
+			this.sprite.setAnimation(ANIM_JUMP_LEFT);
+		}
+		else
+		{
+			this.sprite.setAnimation(ANIM_JUMP_RIGHT);
+		}
 	}
+	
 	 // calculate the new position and velocity:
 	 this.position.y = Math.floor(this.position.y + (deltaTime * this.velocity.y));
 	 this.position.x = Math.floor(this.position.x + (deltaTime * this.velocity.x));
@@ -125,16 +196,48 @@ Player.prototype.update = function(deltaTime)
 		}
 	}
 	
-	if (player.position.y > canvas.height){
-		player.position.y = canvas.height - canvas.height
+	if (player.position.y > canvas.height)
+	{
+		this.onDeath();
 	}
+	
+	/* screen loop 
+	if (player.position.y > canvas.height){
+		player.position.y = canvas.height - canvas.height 
+	} 
+	*/
 }
 
 Player.prototype.draw = function()
 {
-	context.save();			
-		context.translate(this.position.x , this.position.y);
-		context.rotate(this.rotation);
-		context.drawImage(this.image, -this.width/2, -this.height/2);	
-	context.restore();	
+	this.sprite.draw(context, this.position.x , this.position.y)
+}
+
+Player.prototype.onDeath = function ()
+{
+	
+	if (this.isAlive == true)
+	{
+		this.lives -= 1;
+		
+		
+		if(this.lives >= 0)
+		{
+		
+		this.respawn();
+		}
+		else
+		{
+			this.isAlive = false;
+			this.lives = 0;
+		}
+
+	}
+}
+
+Player.prototype.respawn = function ()
+{
+	this.position.set(this.startPosition.x, this.startPosition.y);
+	this.sprite.setAnimation(ANIM_IDLE_RIGHT);
+
 }

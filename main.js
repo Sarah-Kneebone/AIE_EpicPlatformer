@@ -164,6 +164,13 @@ var FRICTION = MAXDX * 6;
  // (a large) instantaneous jump impulse
 var JUMP = METER * 1500;
 
+var heartIMG = document.createElement("img");
+heartIMG.src = "heart.png";
+
+var heartWidth = 20;
+var heartHeight = 20;
+
+
 function run()
 {
 	context.fillStyle = "#ccc";		
@@ -174,6 +181,11 @@ function run()
 	player.update(deltaTime);
 	drawMap();
 	player.draw();
+	
+	for (var i = 0; i < player.lives; i++)
+	{
+		context.drawImage(heartIMG,(canvas.width - 100) + ((heartWidth +2)* i ) , 10 , heartWidth , heartHeight);
+	}
 	
 		
 	// update the frame counter 
@@ -189,7 +201,12 @@ function run()
 	// draw the FPS
 	context.fillStyle = "#f00";
 	context.font="14px Arial";
-	context.fillText("FPS: " + fps, 5, 20, 100);
+	context.fillText("FPS: " + fps, 5, 25, 100);
+	
+	//Draw lives
+	context.fillstyle = "#f00";
+	context.font = "14px Arial";
+	context.fillText("LIVES: " , 550, 25, 100 )
 }
 
 initialize(); //builds the collsion
