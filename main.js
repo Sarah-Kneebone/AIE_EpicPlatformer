@@ -140,6 +140,11 @@ function drawMap()
 	}
 }
 
+var musicBackground;
+var sfxFire;
+
+var player;
+
 var cells = []; // the array that holds our simplified collision data 
 function initialize() {
 	for(var layerIdx = 0; layerIdx < LAYER_COUNT; layerIdx++) { // initialize the collision map
@@ -165,9 +170,29 @@ function initialize() {
 			}
 		}
 	}
+	musicBackground = new Howl( // circle bracket for parameters 
+	{
+		urls : ["background.ogg"], // linking music 
+		loop : true,
+		buffer : true,
+		volume : 0.5
+	});
+	musicBackground.play();
+	
+	sfxFire = new Howl(
+{
+	urls: ["fireEffect.ogg"],
+	buffer: true,
+	volume: 1,
+	onend: function() {
+	isSfxPlaying = false;
+	}
+} );
+
+	
+	player = new Player();
 }
 
-var player = new Player();
 var keyboard = new Keyboard();
 
 // abitrary choice for 1m
