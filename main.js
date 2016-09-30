@@ -40,10 +40,13 @@ var fps = 0;
 var fpsCount = 0;
 var fpsTime = 0;
 
-var LAYER_COUNT = 4;
+var LAYER_COUNT = 5;
 var LAYER_PLATFORMS = 0;
 var LAYER_LADDERS = 1;
 var LAYER_SIGNS = 2;
+var LAYER_OBJECT_ENEMIES = 3;
+var LAYER_OBJECT_TRIGGERS = 4;
+
 
 
 var MAP = {tw : 60 , th : 15};
@@ -58,6 +61,13 @@ var TILESET_COUNT_X = 14;
 
 var tileset = document.createElement("img");
 tileset.src = "tileset.png";
+
+//enemy variables
+var ENEMY_MAXDX = METER * 5;
+var ENEMY_ACCEL = ENEMY_MAXDX * 2;
+var enemies = [];
+
+
 
 function cellAtPixelCoord(layer, x,y) //Helps specify cell locations and collision depending on those locations
 {
@@ -129,10 +139,13 @@ function drawMap()
 				{	
 					// the tiles in the Tiled map are base 1 (meaning a value of 0 means no tile), so subtract one from the tileset id to get the
 					// correct tile
+				
 					var tileIndex = level1.layers[layerIdx].data[idx] - 1;
 					var sx = TILESET_PADDING + (tileIndex % TILESET_COUNT_X) * (TILESET_TILE + TILESET_SPACING);
 					var sy = TILESET_PADDING + (Math.floor(tileIndex / TILESET_COUNT_X)) * (TILESET_TILE + TILESET_SPACING);
 					context.drawImage(tileset, sx, sy, TILESET_TILE, TILESET_TILE, (x - startX) * TILE - offsetX, (y-1)*TILE, TILESET_TILE, TILESET_TILE);
+					
+						
 				}
 				idx++;
 			}
@@ -177,7 +190,7 @@ function initialize() {
 		buffer : true,
 		volume : 0.5
 	});
-	musicBackground.play();
+	//musicBackground.play();
 	
 	sfxFire = new Howl(
 {
@@ -191,6 +204,20 @@ function initialize() {
 
 	
 	player = new Player();
+	
+	// add enemies
+	idx = 0;
+	for(var y = 0; y < level1.layers[LAYER_OBJECT_ENEMIES].height; y++) {
+		for(var x = 0; x < level1.layers[LAYER_OBJECT_ENEMIES].width; x++) {
+			if(level1.layers[LAYER_OBJECT_ENEMIES].data[idx] != 0) {
+				var px = tileToPixel(x);
+				var py = tileToPixel(y);
+				var e = new Enemy(px, py);
+				enemies.push(e);
+			}
+			idx++;
+		}
+	} 
 }
 
 var keyboard = new Keyboard();
@@ -216,15 +243,21 @@ heartIMG.src = "heart.png";
 var heartWidth = 20;
 var heartHeight = 20;
 
+var pause = false;
+var pPressed = false;
+
+
 
 function run()
+	
 {
-	context.fillStyle = "#ccc";		
+	var deltaTime = getDeltaTime();
+	context.fillStyle = "#33ff99";		
 	context.fillRect(0, 0, canvas.width, canvas.height);
 	
-	var deltaTime = getDeltaTime();
 	
-	player.update(deltaTime);
+	
+	
 	drawMap();
 	player.draw();
 	
@@ -243,7 +276,15 @@ function run()
 		fps = fpsCount;
 		fpsCount = 0;
 	}		
-		
+	//update enemy
+	for(var i=0; i<enemies.length; i++)
+	{
+		enemies[i].update(deltaTime);
+	}
+	
+	
+	//draw enemy
+	
 	// draw the FPS
 	context.fillStyle = "#f00";
 	context.font="14px Arial";
@@ -252,7 +293,38 @@ function run()
 	//Draw lives
 	context.fillstyle = "#f00";
 	context.font = "14px Arial";
-	context.fillText("LIVES: " , 550, 25, 100 )
+	context.fillText("LIVES: " , 550, 25, 100 );
+	
+	
+	
+	//pause function
+
+	if (pause != true )
+	{
+		player.update(deltaTime);
+		
+	}
+	else{
+		context.fillstyle = "#f00";
+		context.font = "40px Arial";
+		context.fillText("PAUSED",300,250, 100)
+	}
+	
+	
+	
+	//if p key is pressed and its pressed value statements are bot htrue then the pause statement will be triggered
+	//Second round trhopugh the pPressed statement becomes false and since there is no else statement nothing else hap[pens, stating in the paused state
+	if (keyboard.isKeyDown(keyboard.KEY_P) == true)
+	{
+		if (pPressed == false )
+		{
+			pause = !pause;
+			pPressed = true;
+		}
+		
+	}
+	else
+			pPressed = false;
 }
 
 initialize(); //builds the collsion
